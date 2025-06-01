@@ -1,0 +1,20 @@
+[project]
+name = "physassistbench"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas",
+    "openai",
+    "python-dotenv",
+    "tenacity==8.2.2",
+    "pyyaml",
+    "tqdm",
+    "openpyxl>=3.1.5",
+    "matplotlib>=3.10.9",
+    "anthropic>=0.104.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]

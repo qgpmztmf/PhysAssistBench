@@ -1,0 +1,302 @@
+# physassistbench/model_configs.yaml — Doctor Agent model registry
+#
+# Each entry defines one evaluable model.
+# Fields:
+#   name        : unique identifier used with --model flag
+#   model_id    : model name passed to the API (chat completions)
+#   api_base    : OpenAI-compatible API base URL
+#   api_key_env : environment variable holding the API key
+#   description : human-readable label for reports
+#   api_type    : (optional) "gateway" for Azure Gateway; omit for standard OpenAI-compatible
+#   endpoint_path: (gateway only) deployment-specific path on the gateway
+#   thinking    : (optional, default false) run the model with reasoning/thinking ON.
+#                 The eval reads THIS flag to toggle thinking — it does NOT guess
+#                 from the model name. Requires a larger max_tokens (reasoning shares
+#                 the output budget). DeepSeek→{"thinking":{"type":...}}, Qwen→{"enable_thinking":...}.
+#   max_tokens  : (optional) output-token budget per LLM call. Default 1024 for
+#                 non-thinking; if thinking:true and unset, eval defaults to 10240.
+#                 For reasoning models this budget is SHARED by reasoning+answer.
+#   reasoning_effort: (gateway_responses / GPT-5 only) minimal|low|medium|high.
+#                 GPT-5 thinking is controlled here, NOT by `thinking`. high = max.
+#                 Pair with a large max_tokens so reasoning doesn't truncate the answer.
+#
+# Usage:
+#   uv run python -m physassistbench.run_eval --model deepseek-v3 --language en ...
+#   uv run python -m physassistbench.run_eval --model gpt-4o --language en ...
+
+models:
+
+  # ── DeepSeek ────────────────────────────────────────────────────────────────
+
+  # Note: deepseek-chat and deepseek-reasoner are deprecated 2026/07/24.
+  # They now alias deepseek-v4-flash non-thinking and thinking modes respectively.
+
+  - name: deepseek-v4-pro
+    model_id: deepseek-v4-pro
+    api_base: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    description: DeepSeek-V4-Pro non-thinking
+
+  - name: deepseek-v4-pro-thinking
+    model_id: deepseek-v4-pro
+    api_base: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    description: DeepSeek-V4-Pro thinking mode
+    thinking: true
+    max_tokens: 10240
+
+  - name: deepseek-v4-flash
+    model_id: deepseek-v4-flash
+    api_base: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    description: DeepSeek-V4-Flash non-thinking (replaces deepseek-chat / deepseek-v3)
+
+  - name: deepseek-v4-flash-thinking
+    model_id: deepseek-v4-flash
+    api_base: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    description: DeepSeek-V4-Flash thinking mode (replaces deepseek-reasoner / deepseek-r1)
+    thinking: true
+    max_tokens: 10240
+
+  # Legacy aliases kept for backward compatibility until 2026/07/24
+  - name: deepseek-v3
+    model_id: deepseek-v4-flash
+    api_base: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    description: DeepSeek-V3 (now aliases deepseek-v4-flash non-thinking)
+
+  - name: deepseek-r1
+    model_id: deepseek-v4-flash
+    api_base: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    description: DeepSeek-R1 (now aliases deepseek-v4-flash thinking mode)
+    thinking: true
+    max_tokens: 10240
+
+  # ── OpenAI ──────────────────────────────────────────────────────────────────
+
+  - name: gpt-4o
+    model_id: gpt-4o
+    api_base: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+    description: OpenAI GPT-4o
+
+  - name: gpt-4o-mini
+    model_id: gpt-4o-mini
+    api_base: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+    description: OpenAI GPT-4o-mini
+
+  # ── Anthropic ────────────────────────────────────────────────────────────────
+  # api_type: anthropic → uses AnthropicChatAdapter (Anthropic SDK, /v1/messages).
+  # vectorengine.ai provides Anthropic-compatible endpoint with Bearer auth.
+  # Export key first:  export VECTORENGINE_API_KEY='sk-FEJr...'
+
+  - name: claude-opus-4-7
+    model_id: claude-opus-4-7
+    api_base: https://api.vectorengine.ai
+    api_key_env: VECTORENGINE_API_KEY
+    api_type: anthropic
+    description: Claude Opus 4.7 (vectorengine.ai)
+    max_tokens: 8192
+
+  - name: claude-sonnet
+    model_id: claude-sonnet-4-6
+    api_base: https://api.anthropic.com/v1
+    api_key_env: ANTHROPIC_API_KEY
+    description: Claude Sonnet 4.6
+
+  # ── Alibaba DashScope ────────────────────────────────────────────────────────
+
+  - name: qwen3.5-flash
+    model_id: qwen3.5-flash
+    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key_env: DASHSCOPE_API_KEY
+    thinking_param: enable_thinking_false   # DashScope uses enable_thinking, not deepseek-style
+    description: Qwen3.5-Flash (Alibaba DashScope)
+
+  - name: qwen-plus
+    model_id: qwen-plus
+    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key_env: DASHSCOPE_API_KEY
+    description: Qwen-Plus (Alibaba DashScope)
+
+  # ── Alibaba MaaS token-plan (OpenAI-compatible) ─────────────────────────────
+  # 套餐专属 Base URL — 兼容 OpenAI 接口协议工具
+  # Export the plan API key first:  export ALIYUN_MAAS_API_KEY='sk-sp-...'
+
+  - name: glm-5.1
+    model_id: glm-5.1
+    api_base: https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+    api_key_env: ALIYUN_MAAS_API_KEY
+    description: GLM-5.1 (Alibaba MaaS token-plan)
+    max_tokens: 10240               # emits reasoning tokens that share the output budget
+
+  - name: MiniMax-M2.5
+    model_id: MiniMax-M2.5
+    api_base: https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+    api_key_env: ALIYUN_MAAS_API_KEY
+    description: MiniMax-M2.5 (Alibaba MaaS token-plan)
+    max_tokens: 10240               # emits reasoning tokens that share the output budget
+
+  - name: minimax-m2.7-ve
+    model_id: MiniMax-M2.7
+    api_base: https://api.vectorengine.ai/v1
+    api_key_env: MINIMAX_M27_VE_KEY
+    description: MiniMax-M2.7 (vectorengine.ai proxy)
+    max_tokens: 10240
+
+  - name: kimi-k2.6
+    model_id: kimi-k2.6
+    api_base: https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+    api_key_env: ALIYUN_MAAS_API_KEY
+    description: Kimi-K2.6 (Alibaba MaaS token-plan)
+    max_tokens: 10240               # emits reasoning tokens that share the output budget
+
+  # ── Azure OpenAI Gateway ───────────────────────────────────
+  # api_type: gateway  →  uses Ocp-Apim-Subscription-Key header + URL rewriting
+  # endpoint_path:   →  deployment-specific path on the gateway
+  # See your Azure OpenAI gateway provider docs.
+
+  - name: gpt-5-mini
+    model_id: gpt-5-mini-2025-08-07
+    api_type: gateway_responses        # GPT-5 series requires the Responses API; chat-completions returns 400
+    api_base: https://gateway-openai-apigw.azure-api.net
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    reasoning_effort: minimal        # judge doesn't need deep reasoning; minimise output budget consumption
+    description: GPT-5 Mini (Azure Gateway, Responses API) — default rubric judge
+
+  - name: gpt-4.1-nano
+    model_id: gpt-4.1-nano-2025-04-14
+    api_type: gateway
+    api_base: https://gateway-openai-apigw.azure-api.net
+    endpoint_path: /v1/openai/deployments/gpt-4.1-nano-2025-04-14
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-4.1 Nano (Azure Gateway)
+
+  - name: gpt-4.1-mini
+    model_id: gpt-4.1-mini-2025-04-14
+    api_type: gateway
+    api_base: https://gateway-openai-apigw.azure-api.net
+    endpoint_path: /v1/openai/deployments/gpt-4.1-mini-2025-04-14
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-4.1 Mini (Azure Gateway)
+
+  - name: gpt-4.1
+    model_id: gpt-4.1-2025-04-14
+    api_type: gateway
+    api_base: https://gateway-openai-apigw.azure-api.net
+    endpoint_path: /v1/openai/deployments/gpt-4.1-2025-04-14
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-4.1 (Azure Gateway)
+
+  # ── Gateway Responses API (GPT-5 series) ────────────────────────────────────
+  # api_type: gateway_responses  →  uses /v1/openai/responses endpoint with
+  # input/output format (not chat completions). Model passed in request body.
+
+  - name: gpt-5.5
+    model_id: gpt-5.5-2026-04-24
+    api_type: gateway_responses
+    api_base: https://gateway-openai-apigw.azure-api.net
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-5.5 (Gateway Responses API), medium reasoning
+    reasoning_effort: medium        # minimal|low|medium|high
+    max_tokens: 12288               # reasoning shares max_output_tokens
+    rpm: 80                         # requests/min cap for the gateway (override via EVAL_RPM)
+
+  - name: gpt-5.4
+    model_id: gpt-5.4-2026-03-05
+    api_type: gateway_responses
+    api_base: https://gateway-openai-apigw.azure-api.net
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-5.4 (Gateway Responses API), max reasoning
+    reasoning_effort: high          # minimal|low|medium|high → max thinking
+    max_tokens: 16384               # reasoning shares max_output_tokens; high effort needs headroom
+    rpm: 100                        # gpt-5.4 gateway limit = 100 RPM (override via EVAL_RPM)
+
+  - name: gpt-5-nano-high
+    model_id: gpt-5-nano-2025-08-07
+    api_type: gateway_responses
+    api_base: https://gateway-openai-apigw.azure-api.net
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-5 Nano (Gateway Responses API), high reasoning effort
+    reasoning_effort: high
+    max_tokens: 16384
+
+  - name: gpt-5-nano-low
+    model_id: gpt-5-nano-2025-08-07
+    api_type: gateway_responses
+    api_base: https://gateway-openai-apigw.azure-api.net
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-5 Nano (Gateway Responses API), low reasoning effort
+    reasoning_effort: low
+    max_tokens: 8192
+
+  - name: gpt-5.1
+    model_id: gpt-5.1-2025-11-13
+    api_type: gateway_responses
+    api_base: https://gateway-openai-apigw.azure-api.net
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-5.1 (Gateway Responses API)
+
+  - name: gpt-5
+    model_id: gpt-5-2025-08-07
+    api_type: gateway_responses
+    api_base: https://gateway-openai-apigw.azure-api.net
+    api_key_env: GATEWAY_OPENAI_API_KEY
+    description: GPT-5 (Gateway Responses API)
+
+  # ── Google Gemini (via OpenAI-compatible endpoint) ──────────────────────
+  # Goes through the standard OpenAI path — no custom adapter needed. Multi-turn
+  # tool use works because run_agent_turn preserves tool_calls[*].extra_content
+  # (Gemini 3.x stuffs the required thought_signature in extra_content.google;
+  # echoing it back is mandatory or the API returns 400 INVALID_ARGUMENT).
+
+  - name: gemini-3.5-flash
+    model_id: gemini-3.5-flash
+    api_base: https://generativelanguage.googleapis.com/v1beta/openai/
+    api_key_env: GEMINI_API_KEY
+    description: Gemini 3.5 Flash (Google OpenAI-compat endpoint)
+    max_tokens: 10240
+    max_retries: 10                 # absorb 429 bursts on the official endpoint (SDK honors Retry-After)
+
+  - name: doubao-seed-1-8
+    model_id: doubao-seed-1-8-251228
+    api_base: https://api.vectorengine.ai/v1
+    api_key_env: DOUBAO_SEED_VE_KEY
+    description: Doubao-Seed-1.8-251228 (vectorengine.ai)
+    max_tokens: 8192
+
+  - name: gemini-3.5-flash-ve
+    model_id: gemini-3.5-flash
+    api_base: https://api.vectorengine.ai/v1
+    api_key_env: GEMINI35_FLASH_VE_KEY
+    description: Gemini 3.5 Flash (vectorengine.ai proxy)
+    max_tokens: 10240
+    rpm: 15                         # limit per task to avoid 429 when 8 tasks run concurrently
+
+  - name: gemini-3.1-pro-preview-customtools
+    model_id: gemini-3.1-pro-preview-customtools
+    api_base: https://generativelanguage.googleapis.com/v1beta/openai/
+    api_key_env: GEMINI_API_KEY
+    description: Gemini 3.1 Pro Preview (custom tools), OpenAI-compat endpoint
+    max_tokens: 10240
+    max_retries: 8                  # absorb 429 bursts (compat endpoint rate limit)
+
+  - name: gemini-3.1-pro-ve
+    model_id: gemini-3.1-pro-preview
+    api_base: https://api.vectorengine.ai/v1
+    api_key_env: GEMINI31_PRO_VE_KEY
+    description: Gemini 3.1 Pro Preview (vectorengine.ai proxy, no thinking)
+    max_tokens: 10240
+    thinking: false
+
+  # ── Zhipu GLM (via vectorengine.ai proxy) ───────────────────────────────────
+  - name: glm-5
+    model_id: glm-5
+    api_base: https://api.vectorengine.ai/v1
+    api_key_env: GLM5_VE_KEY
+    description: GLM-5 (Zhipu, vectorengine.ai proxy)
+    max_tokens: 10240               # emits reasoning tokens that share the output budget
+    max_retries: 10                 # absorb proxy 429 bursts

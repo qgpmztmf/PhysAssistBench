@@ -1,0 +1,25 @@
+# Secrets & environments
+.env
+.venv/
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Intermediate / regenerable generation & eval outputs
+physassistbench/data_*/
+physassistbench/results_*/
+physassistbench/logs/
+physassistbench/output/
+*.xlsx
+
+# NOTE: raw_data/ (raw MIMIC-IV sample) and physassistbench/data/ (derived benchmark)
+# ARE tracked in this PRIVATE collaborator-only repo. They are MIMIC-IV-derived
+# credentialed data under the PhysioNet DUA and MUST NOT be pushed to any public
+# remote or redistributed outside PhysioNet.
+
+# Internal rebuttal working files (never publish)
+rebuttal_*.md
+scripts/build_agreement_workbook.py
+results_glm5_parts/
